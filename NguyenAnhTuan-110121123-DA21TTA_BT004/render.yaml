@@ -1,6 +1,7 @@
 services:
   - type: web
-    name: image-stitching-app
+    name: image-stitching-flask
     env: python
+    plan: free
     buildCommand: ""
-    startCommand: "python app.py"
+    startCommand: python app.py
