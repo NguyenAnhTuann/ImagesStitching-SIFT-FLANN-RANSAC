@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for, session
 import os
 import cv2
 import numpy as np
+import tempfile
+import shutil
+import uuid
 from werkzeug.utils import secure_filename
 from anh_2.main import stitch_images as stitch_two
 from anh_2.utils import load_image, detect_and_match
@@ -9,12 +12,23 @@ from anh_nhieu.main import stitch_multiple
 from anh_nhieu.utils import load_images
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'static/uploads'
+app.secret_key = "your_secret_key"
+
 RESULT_PATH = 'static/result.jpg'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def get_user_folder():
+    return session.get('user_folder')
+
+def create_user_folder():
+    temp_dir = tempfile.mkdtemp()
+    session['user_folder'] = temp_dir
+    return temp_dir
 
 def get_uploaded_images():
-    return [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    folder = get_user_folder()
+    if not folder or not os.path.exists(folder):
+        return []
+    return [f for f in os.listdir(folder) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -22,20 +36,21 @@ def index():
     match_mode = False
     error_message = None
 
-    if request.method == "GET" and not request.referrer:
-
-        for f in os.listdir(UPLOAD_FOLDER):
-            file_path = os.path.join(UPLOAD_FOLDER, f)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
+    # Tạo thư mục mới khi truy cập lần đầu hoặc reload trang
+    if request.method == "GET":
+        folder = get_user_folder()
+        if folder and os.path.exists(folder):
+            shutil.rmtree(folder, ignore_errors=True)
+        folder = create_user_folder()
         if os.path.exists(RESULT_PATH):
             os.remove(RESULT_PATH)
 
     uploaded_images = sorted(get_uploaded_images())
 
     if request.method == "POST":
+        folder = get_user_folder()
         action = request.form.get("mode")
-        filenames = [os.path.join(UPLOAD_FOLDER, f) for f in uploaded_images]
+        filenames = [os.path.join(folder, f) for f in uploaded_images]
         stitched_image = None
 
         try:
@@ -96,14 +111,19 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     files = request.files.getlist("images")
+    folder = get_user_folder()
+    if not folder or not os.path.exists(folder):
+        folder = create_user_folder()
+
     for file in files:
         filename = secure_filename(file.filename)
-        file.save(os.path.join(UPLOAD_FOLDER, filename))
+        file.save(os.path.join(folder, filename))
     return redirect(url_for("index"))
 
 @app.route("/delete/<filename>")
 def delete_image(filename):
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    folder = get_user_folder()
+    filepath = os.path.join(folder, filename)
     if os.path.exists(filepath):
         os.remove(filepath)
     return redirect(url_for("index"))
