@@ -21,6 +21,17 @@ def index():
     result_image = None
     match_mode = False
     error_message = None
+
+    # ✅ XÓA TOÀN BỘ ẢNH ĐÃ TẢI LÊN + ẢNH KẾT QUẢ KHI LOAD LẠI TRANG
+    if request.method == "GET" and not request.referrer:
+
+        for f in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, f)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        if os.path.exists(RESULT_PATH):
+            os.remove(RESULT_PATH)
+
     uploaded_images = sorted(get_uploaded_images())
 
     if request.method == "POST":
@@ -81,6 +92,7 @@ def index():
                                error_message=error_message)
 
     return render_template("index.html", result_image=None, uploaded_images=uploaded_images, error_message=None)
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
