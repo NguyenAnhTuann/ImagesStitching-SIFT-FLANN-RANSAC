@@ -1,8 +1,18 @@
 import cv2
 import numpy as np
+import requests
 
 def load_images(paths):
     return [cv2.imread(p) for p in paths]
+
+def load_images_from_urls(urls):
+    images = []
+    for url in urls:
+        response = requests.get(url)
+        img = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+        if img is not None:
+            images.append(img)
+    return images
 
 def detect_and_match(img1, img2):
     sift = cv2.SIFT_create()

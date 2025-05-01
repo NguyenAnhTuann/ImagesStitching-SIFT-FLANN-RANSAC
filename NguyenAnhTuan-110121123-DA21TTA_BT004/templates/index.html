@@ -4,27 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Image Stitching</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: #f8f9fa;
         }
-
         .container {
             max-width: 900px;
             margin-top: 30px;
             padding: 15px;
         }
-
         .result-img {
             max-width: 100%;
             height: auto;
             border: 2px solid #ccc;
             margin-top: 20px;
         }
-
         .thumb {
             width: 100%;
             max-width: 120px;
@@ -32,29 +28,15 @@
             padding: 2px;
             height: auto;
         }
-
-        @media (max-width: 576px) {
-            h1 {
-                font-size: 1.3rem;
-            }
-
-            .form-check-label {
-                font-size: 0.9rem;
-            }
-        }
     </style>
 </head>
 
 <body>
     <div class="container text-center">
-        <h1>🧵 Image Stitching</h1>
-        <h2>Author: Nguyen Anh Tuan - 110121123 - DA21TTA - TVU</h2>
-        <h5 class="mb-5">📩: nguyenanhtuan.it@outlook.com</h3>
+        <h1 class="mb-4">🧵 Image Stitching - Nguyen Anh Tuan - 110121123 - DA21TTA - TVU</h1>
 
         {% if error_message %}
-        <div class="alert alert-danger" role="alert">
-            {{ error_message }}
-        </div>
+        <div class="alert alert-danger" role="alert">{{ error_message }}</div>
         {% endif %}
 
         <!-- Upload form -->
@@ -70,13 +52,10 @@
         <script>
             const input = document.getElementById("fileInput");
             const fileName = document.getElementById("fileName");
-
             input.addEventListener("change", function () {
-                if (input.files.length > 0) {
-                    fileName.textContent = `${input.files.length} file(s) selected`;
-                } else {
-                    fileName.textContent = "No files selected";
-                }
+                fileName.textContent = input.files.length > 0
+                    ? `${input.files.length} file(s) selected`
+                    : "No files selected";
             });
         </script>
 
@@ -86,8 +65,8 @@
         <div class="row justify-content-center mt-2 g-3">
             {% for img in uploaded_images %}
             <div class="col-4 col-sm-3 col-md-2">
-                <img src="{{ url_for('static', filename='uploads/' ~ img) }}" class="thumb mb-1">
-                <a href="{{ url_for('delete_image', filename=img) }}" class="btn btn-sm btn-danger w-100">❌ Delete</a>
+                <img src="{{ img }}" class="thumb mb-1">
+                <a href="{{ url_for('delete_image', index=loop.index0) }}" class="btn btn-sm btn-danger w-100">❌ Delete</a>
             </div>
             {% endfor %}
         </div>
@@ -120,14 +99,12 @@
             </div>
         </form>
 
-        <!-- Result -->
-        {% if result_image %}
-        <h5 class="mt-4">{{ 'Matching Result' if match_mode else 'Stitched Image' }}</h5>
-        <img src="{{ url_for('static', filename='result.jpg') }}" class="result-img" alt="Stitched result">
-        <br>
-        <a href="{{ url_for('download') }}" class="btn btn-success mt-3">💾 Download Image</a>
+        <!-- Result image -->
+        {% if result_url %}
+        <h4 class="mt-4">🖼️ Result Image:</h4>
+        <img src="{{ result_url }}" class="result-img">
+        <a href="{{ result_url }}" class="btn btn-success mt-3" download>⬇ Download</a>
         {% endif %}
     </div>
 </body>
-
 </html>

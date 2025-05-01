@@ -1,64 +1,68 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for, session
-import os
+from flask import Flask, render_template, request, redirect, url_for, session
 import cv2
 import numpy as np
-import tempfile
-import shutil
 import uuid
+import base64
+import requests
+from io import BytesIO
 from werkzeug.utils import secure_filename
-from anh_2.main import stitch_images as stitch_two
-from anh_2.utils import load_image, detect_and_match
-from anh_nhieu.main import stitch_multiple
-from anh_nhieu.utils import load_images
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
+# Setup Flask
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = "very_secret_key_123"
 
-RESULT_PATH = 'static/result.jpg'
+# Cloudinary config
+cloudinary.config(
+    cloud_name="duk8odqun",
+    api_key="485926927892748",
+    api_secret="CSaf5iaR5cC5cl7PiyNlN_uAaSQ",
+    secure=True
+)
 
-def get_user_folder():
-    return session.get('user_folder')
 
-def create_user_folder():
-    temp_dir = tempfile.mkdtemp()
-    session['user_folder'] = temp_dir
-    return temp_dir
+# Template filter for base64 (not needed here but for expansion)
+@app.template_filter('b64encode')
+def b64encode_filter(data):
+    return base64.b64encode(data).decode('utf-8')
 
-def get_uploaded_images():
-    folder = get_user_folder()
-    if not folder or not os.path.exists(folder):
-        return []
-    return [f for f in os.listdir(folder) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+# Load image from Cloudinary URL
+def load_image_from_url(url):
+    response = requests.get(url)
+    image = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+    return image
+
+# === Your custom methods ===
+from anh_2.main import stitch_images as stitch_two
+from anh_2.utils import detect_and_match
+from anh_nhieu.main import stitch_multiple
+from anh_nhieu.utils import load_images_from_urls
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    result_image = None
+    result_url = None
     match_mode = False
     error_message = None
 
-    # Tạo thư mục mới khi truy cập lần đầu hoặc reload trang
-    if request.method == "GET":
-        folder = get_user_folder()
-        if folder and os.path.exists(folder):
-            shutil.rmtree(folder, ignore_errors=True)
-        folder = create_user_folder()
-        if os.path.exists(RESULT_PATH):
-            os.remove(RESULT_PATH)
+    # F5 hoặc lần đầu: reset session
+    if request.method == "GET" and not request.referrer:
+        session.clear()
 
-    uploaded_images = sorted(get_uploaded_images())
+    uploaded_urls = session.get("uploaded_urls", [])
 
     if request.method == "POST":
-        folder = get_user_folder()
         action = request.form.get("mode")
-        filenames = [os.path.join(folder, f) for f in uploaded_images]
+        filenames = uploaded_urls
         stitched_image = None
 
         try:
             if action == "match":
                 if len(filenames) != 2:
                     raise ValueError("❌ Exactly 2 images are required to show matching.")
-                img1 = load_image(filenames[0])
-                img2 = load_image(filenames[1])
+                img1 = load_image_from_url(filenames[0])
+                img2 = load_image_from_url(filenames[1])
                 kp1, kp2, matches = detect_and_match(img1, img2)
                 if len(matches) < 4:
                     raise ValueError("❌ Not enough matching points between the images.")
@@ -69,69 +73,71 @@ def index():
             elif action == "stitch2":
                 if len(filenames) != 2:
                     raise ValueError("❌ Exactly 2 images are required for stitching.")
-                img1 = load_image(filenames[0])
-                img2 = load_image(filenames[1])
+                img1 = load_image_from_url(filenames[0])
+                img2 = load_image_from_url(filenames[1])
                 kp1, kp2, matches = detect_and_match(img1, img2)
                 if len(matches) < 4:
                     raise ValueError("❌ Not enough matching points to perform stitching.")
                 stitched_image = stitch_two(img1, img2, kp1, kp2, matches)
-                if stitched_image is None or np.count_nonzero(stitched_image) < 10:
-                    raise ValueError("❌ Stitching failed – images may not be similar.")
 
             elif action == "stitchn":
                 if len(filenames) <= 2:
                     raise ValueError("❌ Only 2 images – please choose 'Stitch 2 Images' instead.")
-                imgs = load_images(filenames)
-                if len(imgs) < 3:
-                    raise ValueError("❌ Not enough valid images to perform stitching.")
+                imgs = [load_image_from_url(url) for url in filenames]
                 stitched_image = stitch_multiple(imgs)
-                if stitched_image is None or np.count_nonzero(stitched_image) < 10:
-                    raise ValueError("❌ Stitching failed – images do not have enough overlap.")
 
             else:
                 raise ValueError("❌ Invalid action.")
 
-            if stitched_image is not None:
-                cv2.imwrite(RESULT_PATH, stitched_image)
-                result_image = RESULT_PATH
-            else:
-                raise ValueError("❌ Could not generate the stitched result image.")
+            if stitched_image is None or np.count_nonzero(stitched_image) < 10:
+                raise ValueError("❌ Stitching failed – images may not be similar.")
+
+            # Encode ảnh và upload lên Cloudinary
+            _, buffer = cv2.imencode(".png", stitched_image)
+            upload_result = cloudinary.uploader.upload(
+                BytesIO(buffer.tobytes()),
+                folder="images-stitching",
+                public_id=str(uuid.uuid4())
+            )
+            result_url = upload_result["secure_url"]
+            session['result_url'] = result_url
 
         except Exception as e:
             error_message = str(e)
 
-        return render_template("index.html", result_image=result_image,
+        return render_template("index.html",
+                               result_url=session.get("result_url"),
+                               uploaded_images=uploaded_urls,
                                match_mode=match_mode,
-                               uploaded_images=uploaded_images,
                                error_message=error_message)
 
-    return render_template("index.html", result_image=None, uploaded_images=uploaded_images, error_message=None)
-
+    return render_template("index.html",
+                           result_url=session.get("result_url"),
+                           uploaded_images=uploaded_urls,
+                           match_mode=False,
+                           error_message=None)
 
 @app.route("/upload", methods=["POST"])
 def upload():
     files = request.files.getlist("images")
-    folder = get_user_folder()
-    if not folder or not os.path.exists(folder):
-        folder = create_user_folder()
-
+    uploaded_urls = session.get("uploaded_urls", [])
     for file in files:
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(folder, filename))
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder="images-stitching",
+            public_id=str(uuid.uuid4())
+        )
+        uploaded_urls.append(upload_result["secure_url"])
+    session['uploaded_urls'] = uploaded_urls
     return redirect(url_for("index"))
 
-@app.route("/delete/<filename>")
-def delete_image(filename):
-    folder = get_user_folder()
-    filepath = os.path.join(folder, filename)
-    if os.path.exists(filepath):
-        os.remove(filepath)
+@app.route("/delete/<int:index>")
+def delete_image(index):
+    uploaded_urls = session.get("uploaded_urls", [])
+    if 0 <= index < len(uploaded_urls):
+        del uploaded_urls[index]
+    session['uploaded_urls'] = uploaded_urls
     return redirect(url_for("index"))
-
-@app.route("/download")
-def download():
-    return send_file(RESULT_PATH, as_attachment=True)
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=False)

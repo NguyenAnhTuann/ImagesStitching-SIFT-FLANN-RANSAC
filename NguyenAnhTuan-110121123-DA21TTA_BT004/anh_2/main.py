@@ -10,7 +10,6 @@ def stitch_images(img1, img2, kp1, kp2, matches):
     if len(matches) < 4:
         raise ValueError("Không đủ điểm tương đồng để ghép ảnh.")
     
-    # ✅ PHẢI đặt trong hàm – thụt lề đúng
     distances = [m.distance for m in matches]
     avg_distance = np.mean(distances)
 
