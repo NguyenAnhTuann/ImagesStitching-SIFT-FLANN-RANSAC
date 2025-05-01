@@ -21,7 +21,7 @@ def index():
     result_image = None
     match_mode = False
     error_message = None
-    uploaded_images = get_uploaded_images()
+    uploaded_images = sorted(get_uploaded_images())
 
     if request.method == "POST":
         action = request.form.get("mode")
