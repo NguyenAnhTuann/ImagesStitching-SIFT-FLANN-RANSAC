@@ -22,7 +22,6 @@ def index():
     match_mode = False
     error_message = None
 
-    # ✅ XÓA TOÀN BỘ ẢNH ĐÃ TẢI LÊN + ẢNH KẾT QUẢ KHI LOAD LẠI TRANG
     if request.method == "GET" and not request.referrer:
 
         for f in os.listdir(UPLOAD_FOLDER):
