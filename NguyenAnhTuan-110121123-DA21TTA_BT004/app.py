@@ -31,46 +31,46 @@ def index():
         try:
             if action == "match":
                 if len(filenames) != 2:
-                    raise ValueError("❌ Cần đúng 2 ảnh để hiển thị matching.")
+                    raise ValueError("❌ Exactly 2 images are required to show matching.")
                 img1 = load_image(filenames[0])
                 img2 = load_image(filenames[1])
                 kp1, kp2, matches = detect_and_match(img1, img2)
                 if len(matches) < 4:
-                    raise ValueError("❌ Các ảnh không có đủ điểm tương đồng để hiển thị matching.")
+                    raise ValueError("❌ Not enough matching points between the images.")
                 stitched_image = cv2.drawMatches(img1, kp1, img2, kp2, matches, None,
                                                  flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
                 match_mode = True
 
             elif action == "stitch2":
                 if len(filenames) != 2:
-                    raise ValueError("❌ Cần đúng 2 ảnh để ghép.")
+                    raise ValueError("❌ Exactly 2 images are required for stitching.")
                 img1 = load_image(filenames[0])
                 img2 = load_image(filenames[1])
                 kp1, kp2, matches = detect_and_match(img1, img2)
                 if len(matches) < 4:
-                    raise ValueError("❌ Các ảnh không có đủ điểm tương đồng để ghép.")
+                    raise ValueError("❌ Not enough matching points to perform stitching.")
                 stitched_image = stitch_two(img1, img2, kp1, kp2, matches)
                 if stitched_image is None or np.count_nonzero(stitched_image) < 10:
-                    raise ValueError("❌ Không thể ghép ảnh – ảnh không phù hợp hoặc không giống nhau.")
+                    raise ValueError("❌ Stitching failed – images may not be similar.")
 
             elif action == "stitchn":
                 if len(filenames) <= 2:
-                    raise ValueError("❌ Chỉ có 2 ảnh – bạn chỉ được chọn ghép 2 ảnh.")
+                    raise ValueError("❌ Only 2 images – please choose 'Stitch 2 Images' instead.")
                 imgs = load_images(filenames)
                 if len(imgs) < 3:
-                    raise ValueError("❌ Không đủ ảnh hợp lệ để ghép.")
+                    raise ValueError("❌ Not enough valid images to perform stitching.")
                 stitched_image = stitch_multiple(imgs)
                 if stitched_image is None or np.count_nonzero(stitched_image) < 10:
-                    raise ValueError("❌ Không thể ghép ảnh – các ảnh không có điểm tương đồng.")
+                    raise ValueError("❌ Stitching failed – images do not have enough overlap.")
 
             else:
-                raise ValueError("❌ Hành động không hợp lệ.")
+                raise ValueError("❌ Invalid action.")
 
             if stitched_image is not None:
                 cv2.imwrite(RESULT_PATH, stitched_image)
                 result_image = RESULT_PATH
             else:
-                raise ValueError("❌ Không thể tạo ảnh kết quả.")
+                raise ValueError("❌ Could not generate the stitched result image.")
 
         except Exception as e:
             error_message = str(e)
