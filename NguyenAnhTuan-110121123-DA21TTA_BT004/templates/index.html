@@ -3,24 +3,28 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Image Stitching</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}">
+    <title>Images Stitching</title>p
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: #f8f9fa;
         }
+
         .container {
             max-width: 900px;
             margin-top: 30px;
             padding: 15px;
         }
+
         .result-img {
             max-width: 100%;
             height: auto;
             border: 2px solid #ccc;
             margin-top: 20px;
         }
+
         .thumb {
             width: 100%;
             max-width: 120px;
@@ -33,7 +37,9 @@
 
 <body>
     <div class="container text-center">
-        <h1 class="mb-4">🧵 Image Stitching - Nguyen Anh Tuan - 110121123 - DA21TTA - TVU</h1>
+        <h1 class="mb-4">🧵 Images Stitching</h1>
+        <h3>Nguyen Anh Tuan - 110121123 - DA21TTA - TVU</h3>
+        <h3 class="mb-4">📩: nguyenanhtuan.it@outlook.com</h3>
 
         {% if error_message %}
         <div class="alert alert-danger" role="alert">{{ error_message }}</div>
@@ -66,7 +72,8 @@
             {% for img in uploaded_images %}
             <div class="col-4 col-sm-3 col-md-2">
                 <img src="{{ img }}" class="thumb mb-1">
-                <a href="{{ url_for('delete_image', index=loop.index0) }}" class="btn btn-sm btn-danger w-100">❌ Delete</a>
+                <a href="{{ url_for('delete_image', index=loop.index0) }}" class="btn btn-sm btn-danger w-100">❌
+                    Delete</a>
             </div>
             {% endfor %}
         </div>
@@ -107,4 +114,5 @@
         {% endif %}
     </div>
 </body>
+
 </html>
