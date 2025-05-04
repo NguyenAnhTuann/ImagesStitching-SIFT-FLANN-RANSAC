@@ -31,30 +31,30 @@ class ImageStitchApp:
         self.inner_frame = tk.Frame(outer_frame, bg="#f8f9fa")
         self.inner_frame.pack(anchor="center", pady=20)
 
-        tk.Label(self.inner_frame, text="📂 Chọn ảnh để ghép", font=("Segoe UI", 18, "bold"),
+        tk.Label(self.inner_frame, text="📂 Select Images", font=("Segoe UI", 18, "bold"),
                  bg="#f8f9fa", fg="#212529").pack(pady=10)
 
-        tk.Button(self.inner_frame, text="📁 Chọn ảnh", command=self.select_images,
+        tk.Button(self.inner_frame, text="📁 Select  Images", command=self.select_images,
                   bg="#0d6efd", fg="white", font=("Segoe UI", 12, "bold"),
                   activebackground="#0b5ed7", relief="flat", width=20).pack(pady=5)
 
         self.mode_var = tk.StringVar(value="2")
         radio_frame = tk.Frame(self.inner_frame, bg="#f8f9fa")
         radio_frame.pack(pady=5)
-        tk.Radiobutton(radio_frame, text="🖼️ Ghép 2 ảnh", variable=self.mode_var, value="2",
+        tk.Radiobutton(radio_frame, text="🖼️ Stitch 2 Images", variable=self.mode_var, value="2",
                        bg="#f8f9fa", fg="#495057", font=("Segoe UI", 11), selectcolor="#dbe4ff").pack(side=tk.LEFT, padx=10)
-        tk.Radiobutton(radio_frame, text="🖼️ Ghép nhiều ảnh", variable=self.mode_var, value="n",
+        tk.Radiobutton(radio_frame, text="🖼️ Stitch Multiple Images", variable=self.mode_var, value="n",
                        bg="#f8f9fa", fg="#495057", font=("Segoe UI", 11), selectcolor="#dbe4ff").pack(side=tk.LEFT, padx=10)
 
-        tk.Button(self.inner_frame, text="🔍 Hiển thị matching", command=self.show_matching,
+        tk.Button(self.inner_frame, text="🔍 Show Matching (2 Images)", command=self.show_matching,
                   bg="#d63384", fg="white", font=("Segoe UI", 12, "bold"),
                   activebackground="#c2255c", relief="flat", width=20).pack(pady=5)
 
-        tk.Button(self.inner_frame, text="🧵 Thực hiện ghép ảnh", command=self.stitch_images,
+        tk.Button(self.inner_frame, text="🧵 Execute", command=self.stitch_images,
                   bg="#198754", fg="white", font=("Segoe UI", 12, "bold"),
                   activebackground="#157347", relief="flat", width=20).pack(pady=5)
 
-        tk.Button(self.inner_frame, text="💾 Lưu ảnh kết quả", command=self.save_result,
+        tk.Button(self.inner_frame, text="💾 Download", command=self.save_result,
                   bg="#ffc107", fg="black", font=("Segoe UI", 12, "bold"),
                   activebackground="#ffca2c", relief="flat", width=20).pack(pady=5)
 

@@ -10,11 +10,9 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# Setup Flask
 app = Flask(__name__)
 app.secret_key = "very_secret_key_123"
 
-# Cloudinary config
 cloudinary.config(
     cloud_name="duk8odqun",
     api_key="485926927892748",
@@ -23,18 +21,15 @@ cloudinary.config(
 )
 
 
-# Template filter for base64 (not needed here but for expansion)
 @app.template_filter('b64encode')
 def b64encode_filter(data):
     return base64.b64encode(data).decode('utf-8')
 
-# Load image from Cloudinary URL
 def load_image_from_url(url):
     response = requests.get(url)
     image = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
     return image
 
-# === Your custom methods ===
 from anh_2.main import stitch_images as stitch_two
 from anh_2.utils import detect_and_match
 from anh_nhieu.main import stitch_multiple
@@ -46,7 +41,6 @@ def index():
     match_mode = False
     error_message = None
 
-    # F5 hoặc lần đầu: reset session
     if request.method == "GET" and not request.referrer:
         session.clear()
 
@@ -92,7 +86,6 @@ def index():
             if stitched_image is None or np.count_nonzero(stitched_image) < 10:
                 raise ValueError("❌ Stitching failed – images may not be similar.")
 
-            # Encode ảnh và upload lên Cloudinary
             _, buffer = cv2.imencode(".png", stitched_image)
             upload_result = cloudinary.uploader.upload(
                 BytesIO(buffer.tobytes()),
