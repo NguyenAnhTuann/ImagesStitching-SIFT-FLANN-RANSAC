@@ -9,7 +9,7 @@ def stitch_pair(img1, img2):
     kp1, kp2, matches = detect_and_match(img1, img2)
 
     if len(matches) < 4:
-        raise ValueError("Không đủ điểm tương đồng để tính Homography.")
+        raise ValueError("Not enough similarities to calculate Homography.")
     
     # ✅ Thêm đoạn này để kiểm tra chất lượng matching
     distances = [m.distance for m in matches]
