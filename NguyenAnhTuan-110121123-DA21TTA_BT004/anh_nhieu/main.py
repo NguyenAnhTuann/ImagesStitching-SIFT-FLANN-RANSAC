@@ -15,7 +15,7 @@ def stitch_pair(img1, img2):
     distances = [m.distance for m in matches]
     avg_distance = np.mean(distances)
     if avg_distance > 200:
-        raise ValueError("Ảnh quá khác nhau — không thể ghép do không có điểm tương đồng thực sự.")
+        raise ValueError("The photos are too different — they can't be matched because there's no real similarity.")
 
     src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
     dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
